@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NOI Multiplayer Game</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 10px; }
+    #playersList div { margin: 5px 0; padding: 5px; background: #eee; border-radius: 4px; }
+    button { margin-left: 10px; }
+    #challengeResult { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>NOI - Multiplayer Challenge Game</h1>
+  <div>
+    <label>Room ID: <input type="text" id="roomId" value="room1" /></label>
+    <label>Your Name: <input type="text" id="playerName" /></label>
+    <button id="joinBtn">Join Room</button>
+  </div>
+
+  <div id="gameArea" style="display:none;">
+    <h3>Players:</h3>
+    <div id="playersList"></div>
+    <button id="finalizeBtn">Finalize Challenge</button>
+    <div id="challengeResult"></div>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    const joinBtn = document.getElementById('joinBtn');
+    const roomIdInput = document.getElementById('roomId');
+    const playerNameInput = document.getElementById('playerName');
+    const playersListDiv = document.getElementById('playersList');
+    const gameArea = document.getElementById('gameArea');
+    const finalizeBtn = document.getElementById('finalizeBtn');
+    const challengeResultDiv = document.getElementById('challengeResult');
+
+    let currentRoom = null;
+
+    joinBtn.onclick = () => {
+      const roomId = roomIdInput.value.trim();
+      const playerName = playerNameInput.value.trim();
+      if (!roomId || !playerName) {
+        alert('Please enter Room ID and your Name.');
+        return;
+      }
+      currentRoom = roomId;
+      socket.emit('joinRoom', { roomId, playerName });
+      gameArea.style.display = 'block';
+      joinBtn.disabled = true;
+      roomIdInput.disabled = true;
+      playerNameInput.disabled = true;
+    };
+
+    socket.on('playersUpdate', (players) => {
+      playersListDiv.innerHTML = '';
+      players.forEach(player => {
+        const playerDiv = document.createElement('div');
+        playerDiv.textContent = player.name;
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.onclick = () => {
+          socket.emit('deletePlayer', { roomId: currentRoom, targetId: player.id });
+        };
+        playerDiv.appendChild(deleteBtn);
+        playersListDiv.appendChild(playerDiv);
+      });
+    });
+
+    socket.on('deletedCountsUpdate', (counts) => {
+      // Optionally show how many times each player was deleted
+    });
+
+    finalizeBtn.onclick = () => {
+      socket.emit('finalizeChallenge', currentRoom);
+    };
+
+    socket.on('challengeResult', (player) => {
+      challengeResultDiv.textContent = `Player to do the challenge: ${player.name}`;
+    });
+  </script>
+</body>
+</html>
