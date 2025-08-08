@@ -1,0 +1,13 @@
+{
+  "name": "noi-multiplayer-game",
+  "version": "1.0.0",
+  "description": "NOI Multiplayer online game using Node.js and Socket.io",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.7.2"
+  }
+}
